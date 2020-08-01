@@ -6,6 +6,10 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
+import android.os.PowerManager;
+import android.util.Log;
+
+import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.Player;
@@ -14,6 +18,7 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
@@ -21,6 +26,8 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.PlaybackParameters;
 
@@ -43,7 +50,7 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
 
     private int shouldSeekTo = -1;
 
-    private MyPlayer player;
+    private SimpleExoPlayer player;
     private AudioplayersPlugin ref;
 
     WrappedMediaPlayer(AudioplayersPlugin ref, String playerId) {
@@ -135,7 +142,7 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
         if (this.stayAwake != stayAwake) {
             this.stayAwake = stayAwake;
             if (!this.released && this.stayAwake) {
-                //this.player.setHandleWakeLock(true); //.setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK);
+                this.player.setWakeMode(C.WAKE_MODE_NETWORK);
             }
         }
     }
@@ -187,7 +194,7 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
             this.released = false;
             this.player = createPlayer(context);
             this.setSource(url, true, context);
-        } else if (this.prepared) {
+        } else {
             this.player.setPlayWhenReady(true);
             this.ref.handleIsPlaying(this);
         }
@@ -252,13 +259,12 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
      * Internal logic. Private methods
      */
 
-    private MyPlayer createPlayer(Context context) {
-        DefaultBandwidthMeter defaultBandwidthMeter = new DefaultBandwidthMeter();
-        AdaptiveTrackSelection.Factory adaptiveTrackSelectionFactory = new AdaptiveTrackSelection.Factory(defaultBandwidthMeter);
-        DefaultTrackSelector defaultTrackSelector = new DefaultTrackSelector(adaptiveTrackSelectionFactory);
-
-        MyPlayer player = new MyPlayer(new AudioOnlyRenderersFactory(context), defaultTrackSelector,new DefaultLoadControl());
-        setAttributes(player, context);
+    private SimpleExoPlayer createPlayer(Context context) {
+        //DefaultBandwidthMeter defaultBandwidthMeter = new DefaultBandwidthMeter();
+        //AdaptiveTrackSelection.Factory adaptiveTrackSelectionFactory = new AdaptiveTrackSelection.Factory(defaultBandwidthMeter);
+        //DefaultTrackSelector defaultTrackSelector = new DefaultTrackSelector(adaptiveTrackSelectionFactory);
+        SimpleExoPlayer player = new SimpleExoPlayer.Builder(context,new AudioOnlyRenderersFactory(context)).build();
+        //setAttributes(player, context);
         player.setVolume((float) volume);
         if(this.releaseMode == ReleaseMode.LOOP)
             player.setRepeatMode(Player.REPEAT_MODE_ONE);
@@ -266,14 +272,14 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
         return player;
     }
     Player.EventListener listener;
-    private void initEventListeners(final MyPlayer player) {
+    private void initEventListeners(final SimpleExoPlayer player) {
         /*player.addAnalyticsListener(new AnalyticsListener() {
             @Override
             public void onAudioSessionId(EventTime eventTime, int audioSessionId) {
                // ref.handleAudioSessionIdChange(backgroundAudioPlayer, audioSessionId);
             }
         });*/
-        listener = new Player.DefaultEventListener() {
+        listener = new Player.EventListener() {
 
             @Override
             public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
@@ -283,10 +289,11 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
                         break;
                     }
                     case Player.STATE_READY: {
+                        Log.e("STATE_READY", playWhenReady+"");
                         prepared = true;
                         if (playWhenReady) {
                             // resumed
-                            player.setPlayWhenReady(true);
+                            //player.setPlayWhenReady(true);
                             ref.handleIsPlaying(WrappedMediaPlayer.this);
                         }
                         if (shouldSeekTo >= 0) {
@@ -297,13 +304,17 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
                     }
                     case Player.STATE_ENDED: {
                         // completed
-                        if(releaseMode != ReleaseMode.LOOP){
-                            player.setPlayWhenReady(false);
-                            //player.seekTo(0, 0);
-                            ref.handleCompletion(WrappedMediaPlayer.this);
-                        }else{
-                            //player.seekTo(0, 0);
+                        Log.e("STATE_ENDED", playWhenReady+"");
+                        if(playWhenReady){
+                            if(releaseMode != ReleaseMode.LOOP){
+                                player.setPlayWhenReady(false);
+                                //player.seekTo(0, 0);
+                                ref.handleCompletion(WrappedMediaPlayer.this);
+                            }else{
+                                //player.seekTo(0, 0);
+                            }
                         }
+
 
                         break;
                     }
@@ -329,13 +340,23 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
         if(url == "")
             return;
         try{
-            DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(context,
-                    Util.getUserAgent(context, "NewAudiotruyen"));
-// This is the MediaSource representing the media to be played.
-            ExtractorMediaSource extractorMediaSource = new ExtractorMediaSource(Uri.parse(url), dataSourceFactory, new DefaultExtractorsFactory(), 10, null, null, null, 1024 * 1024);
 
-            player.prepare(extractorMediaSource, true, true);
+            String userAgent = Util.getUserAgent(context, "NewAudiotruyen");
+            DataSource.Factory httpDataSourceFactory = new DefaultHttpDataSourceFactory(
+                    userAgent,
+                    20000,
+                    20000,
+                    true
+            );
+            DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(context,
+                    httpDataSourceFactory);
+            Uri uri = Uri.parse(url);
+
+
+            ProgressiveMediaSource mediaSource = new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(uri);
+            player.prepare(mediaSource, true, true);
             //player.seekTo(0, 0);
+            Log.e("setSource", isPlay+"");
             player.setPlayWhenReady(isPlay);
 
         } catch (Exception ex) {

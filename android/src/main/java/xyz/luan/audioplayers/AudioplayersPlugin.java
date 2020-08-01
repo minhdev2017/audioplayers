@@ -2,6 +2,7 @@ package xyz.luan.audioplayers;
 
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -68,6 +69,7 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
         final String playerId = call.argument("playerId");
         final String mode = call.argument("mode");
         final Player player = getPlayer(playerId, mode);
+        Log.e("handleMethodCall", call.method);
         switch (call.method) {
             case "play": {
                 final String url = call.argument("url");
@@ -86,6 +88,7 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
                 break;
             }
             case "resume": {
+
                 player.play(context.getApplicationContext());
                 break;
             }

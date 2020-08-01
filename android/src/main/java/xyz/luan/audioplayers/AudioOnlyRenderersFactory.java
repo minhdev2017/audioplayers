@@ -7,6 +7,8 @@ import com.google.android.exoplayer2.Renderer;
 import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.audio.AudioRendererEventListener;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
+import com.google.android.exoplayer2.drm.DrmSessionManager;
+import com.google.android.exoplayer2.drm.FrameworkMediaCrypto;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.metadata.MetadataOutput;
 import com.google.android.exoplayer2.text.TextOutput;
@@ -25,9 +27,9 @@ public class AudioOnlyRenderersFactory implements RenderersFactory {
             VideoRendererEventListener videoRendererEventListener,
             AudioRendererEventListener audioRendererEventListener,
             TextOutput textRendererOutput,
-            MetadataOutput metadataRendererOutput) {
-        return new Renderer[] {new MediaCodecAudioRenderer(
-                MediaCodecSelector.DEFAULT, eventHandler, audioRendererEventListener)};
+            MetadataOutput metadataRendererOutput,
+            DrmSessionManager<FrameworkMediaCrypto> drmSessionManager) {
+        return new Renderer[] {new MediaCodecAudioRenderer(context, MediaCodecSelector.DEFAULT, eventHandler, audioRendererEventListener)};
     }
 
 
