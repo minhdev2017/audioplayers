@@ -2,31 +2,17 @@ package xyz.luan.audioplayers;
 
 import android.app.WallpaperManager;
 import android.content.Context;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
-import android.os.PowerManager;
 import android.util.Log;
 
 import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
-import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
-import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.PlaybackParameters;
@@ -260,9 +246,6 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
      */
 
     private SimpleExoPlayer createPlayer(Context context) {
-        //DefaultBandwidthMeter defaultBandwidthMeter = new DefaultBandwidthMeter();
-        //AdaptiveTrackSelection.Factory adaptiveTrackSelectionFactory = new AdaptiveTrackSelection.Factory(defaultBandwidthMeter);
-        //DefaultTrackSelector defaultTrackSelector = new DefaultTrackSelector(adaptiveTrackSelectionFactory);
         SimpleExoPlayer player = new SimpleExoPlayer.Builder(context,new AudioOnlyRenderersFactory(context)).build();
         //setAttributes(player, context);
         player.setVolume((float) volume);

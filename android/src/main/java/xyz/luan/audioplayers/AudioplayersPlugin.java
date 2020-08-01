@@ -164,7 +164,7 @@ public class AudioplayersPlugin implements MethodCallHandler, FlutterPlugin {
     }
 
     public void handleIsPlaying(Player player) {
-        startPositionUpdates();
+        //startPositionUpdates();
     }
 
     public void handleDuration(Player player) {
