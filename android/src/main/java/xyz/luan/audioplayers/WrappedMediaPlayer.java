@@ -74,7 +74,7 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
     void setVolume(double volume) {
         if (this.volume != volume) {
             this.volume = volume;
-            if (!this.released) {
+            if (!this.released && this.player != null) {
                 this.player.setVolume((float) volume);
             }
         }
@@ -137,7 +137,7 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
     void setReleaseMode(ReleaseMode releaseMode) {
         if (this.releaseMode != releaseMode) {
             this.releaseMode = releaseMode;
-            if (!this.released) {
+            if (!this.released && this.player != null) {
                 if(this.releaseMode == ReleaseMode.LOOP)
                     this.player.setRepeatMode(Player.REPEAT_MODE_ONE);
                 else
@@ -203,26 +203,30 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
 
     @Override
     void release() {
-        if (this.released) {
-            return;
+        if(this.player != null){
+            if (this.released) {
+                return;
+            }
+
+            this.player.stop();
+            if(listener!= null){
+                this.player.removeListener(listener);
+                listener = null;
+            }
+            this.player.release();
+            this.player = null;
+
+            this.prepared = false;
+            this.released = true;
+            this.error = false;
         }
 
-        this.player.stop();
-        if(listener!= null){
-            this.player.removeListener(listener);
-            listener = null;
-        }
-        this.player.release();
-        this.player = null;
-
-        this.prepared = false;
-        this.released = true;
-        this.error = false;
     }
 
     @Override
     void pause() {
-        this.player.setPlayWhenReady(false);
+        if(this.player != null)
+            this.player.setPlayWhenReady(false);
     }
 
     // seek operations cannot be called until after
@@ -293,8 +297,9 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
                                 player.setPlayWhenReady(false);
                                 //player.seekTo(0, 0);
                                 ref.handleCompletion(WrappedMediaPlayer.this);
+                                WrappedMediaPlayer.this.release();
                             }else{
-                                //player.seekTo(0, 0);
+                                player.seekTo(0, 0);
                             }
                         }
 
@@ -327,8 +332,8 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
             String userAgent = Util.getUserAgent(context, "NewAudiotruyen");
             DataSource.Factory httpDataSourceFactory = new DefaultHttpDataSourceFactory(
                     userAgent,
-                    20000,
-                    20000,
+                    10000,
+                    10000,
                     true
             );
             DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(context,

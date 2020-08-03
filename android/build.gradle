@@ -33,7 +33,7 @@ android {
     }
 }
 dependencies {
-    implementation 'com.google.android.exoplayer:exoplayer-core:2.11.7'
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.11.4'
 }
 allprojects {
     gradle.projectsEvaluated {
