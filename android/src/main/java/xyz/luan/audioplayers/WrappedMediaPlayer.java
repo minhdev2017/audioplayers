@@ -276,7 +276,7 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
                         break;
                     }
                     case Player.STATE_READY: {
-                        Log.e("STATE_READY", playWhenReady+"");
+                        Log.e("STATE_READY", url+"");
                         prepared = true;
                         if (playWhenReady) {
                             // resumed
@@ -297,7 +297,7 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
                                 player.setPlayWhenReady(false);
                                 //player.seekTo(0, 0);
                                 ref.handleCompletion(WrappedMediaPlayer.this);
-                                WrappedMediaPlayer.this.release();
+                                //WrappedMediaPlayer.this.release();
                             }else{
                                 player.seekTo(0, 0);
                             }
@@ -332,8 +332,8 @@ public class WrappedMediaPlayer extends xyz.luan.audioplayers.Player {
             String userAgent = Util.getUserAgent(context, "NewAudiotruyen");
             DataSource.Factory httpDataSourceFactory = new DefaultHttpDataSourceFactory(
                     userAgent,
-                    10000,
-                    10000,
+                    5000,
+                    5000,
                     true
             );
             DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(context,
